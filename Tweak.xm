@@ -5,6 +5,8 @@
 
 #import "./headers/IMCore/IMDaemonController.h"
 
+#import <CoreFoundation/CoreFoundation.h>
+#import <CoreFoundation/CFString.h>
 
 %group SMSBBPlugin
 %hook SMSBBPlugin
@@ -32,90 +34,29 @@
 }
 
 -(void)handleBulletinActionResponse:(BBActionResponse *)response {
+	%orig;
 	if (response) {
-
 		if ([response.actionID isEqualToString:@"CKBBActionIdentifierDeleteMessage"]) {
-
 			NSString* messageGUID = (NSString *)[response.bulletinContext objectForKey:@"CKBBContextKeyMessageGUID"];
 			NSMutableArray* messageGUIDs = [NSMutableArray new];
 			[messageGUIDs addObject:messageGUID];
 			IMDaemonController *daemonController = [NSClassFromString(@"IMDaemonController") sharedInstance];
-
 			if ([daemonController isConnected]) {
-
 				[[daemonController _remoteObject] deleteMessageWithGUIDs:[messageGUIDs copy] queryID:nil];
-			}
-			else {
-				if ([daemonController connectToDaemonWithLaunch:YES]) {
-					if ([daemonController isConnected]) {
-
-						[[daemonController _remoteObject] deleteMessageWithGUIDs:[messageGUIDs copy] queryID:nil];
-					}
-					else {
-
-						[daemonController _connectToDaemonWithLaunch:YES capabilities:17159];
-
-						while ([daemonController isConnecting]) {
-
-						}
-
-						if ([daemonController isConnected]) {
-
-
-							[[daemonController _remoteObject] deleteMessageWithGUIDs:[messageGUIDs copy] queryID:nil];
-						}
-					}
-				}
-				else {
-
-					[daemonController _connectToDaemonWithLaunch:YES capabilities:17159];
-
-					while ([daemonController isConnecting]) {
-
-					}
-
-					if ([daemonController isConnected]) {
-
-						[[daemonController _remoteObject] deleteMessageWithGUIDs:[messageGUIDs copy] queryID:nil];
-					}
-				}
 			}
 		}
 	}
-	%orig;
 }
 
 %end
 %end
-
-
-// Super powerful code, like really, you have no idea
-
-%hook IMDaemonController
-- (unsigned int)_capabilities {
-	return 17159;
-}
-- (void)_setCapabilities:(unsigned int)arg1 {
-	%orig(17159);
-}
-- (unsigned int)capabilities {
-	return 17159;
-}
-- (unsigned int)capabilitiesForListenerID:(id)arg1 {
-	return 17159;
-}
-%end
-
-// end of super powerful code
 
 static void notificationCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
     if ([((__bridge NSDictionary *)userInfo)[NSLoadedClasses] containsObject:@"SMSBBPlugin"]) {
         %init(SMSBBPlugin);
     }
 }
- 
- 
- 
+
 %ctor {
     %init;
     CFNotificationCenterAddObserver(

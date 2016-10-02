@@ -10,4 +10,6 @@
 - (id<IMRemoteDaemonProtocol>)_remoteObject;
 - (BOOL)connectToDaemonWithLaunch:(BOOL)arg1;
 - (BOOL)isConnecting;
+- (unsigned int)_capabilities;
+- (void)_setCapabilities:(unsigned int)arg1;
 @end
